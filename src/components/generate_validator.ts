@@ -10,7 +10,7 @@ export const generateValidator = ({ name, columns }: { name: string, columns: an
   const templatePath = new URL('../stubs/validator.stub', import.meta.url)
   let content = fs.readFileSync(templatePath, 'utf8')
 
-  content = content.replaceAll('{{ modelName }}', string.camelCase(string.singular(name)))
+  content = content.replaceAll('{{ modelName }}', string.pascalCase(string.singular(name)))
 
   //MARK: Add columns
   const columnTypes: Record<string, string> = {
@@ -40,10 +40,10 @@ export const generateValidator = ({ name, columns }: { name: string, columns: an
 
     const maxLength = column.CHARACTER_MAXIMUM_LENGTH ? `.maxLength(${column.CHARACTER_MAXIMUM_LENGTH})` : ''
     contentColumns += `
-    ${column.COLUMN_NAME}: ${columnTypes[column.DATA_TYPE]}${maxLength},`
+    ${string.camelCase(column.COLUMN_NAME)}: ${columnTypes[column.DATA_TYPE]}${maxLength},`
 
     contentColumnsUpdate += `
-    ${column.COLUMN_NAME}: ${columnTypes[column.DATA_TYPE]}${maxLength}.optional(),`
+    ${string.camelCase(column.COLUMN_NAME)}: ${columnTypes[column.DATA_TYPE]}${maxLength}.optional(),`
   }
 
   content = content.replace('{{ columns }}', contentColumns.trim())

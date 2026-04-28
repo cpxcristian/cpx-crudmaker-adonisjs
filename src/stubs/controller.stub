@@ -1,15 +1,15 @@
 {{ httpContext }}import BaseController from '#controllers/base_controller'
 
 import {{ modelName }} from '#models/{{ modelFileName }}'
-import { {{ modelInstanceName }}Validator, {{ modelInstanceName }}ValidatorUpdate } from '#validators/{{ modelFileName }}'
+import { create{{ modelName }}Validator, update{{ modelName }}Validator } from '#validators/{{ modelFileName }}'
 
 export default class {{ controllerName }}Controller extends BaseController {
   constructor() {
     super()
     this.model = {{ modelName }}
     this.lang = '{{ langFileName }}'
-    this.validator = {{ modelInstanceName }}Validator
-    this.validatorUpdate = {{ modelInstanceName }}ValidatorUpdate
+    this.validator = create{{ modelName }}Validator
+    this.validatorUpdate = update{{ modelName }}Validator
     this.columns = new {{ modelName }}().columns
   }{{ crudMethods }}
 }

@@ -1,12 +1,12 @@
 import vine from '@vinejs/vine'
 
-export const {{ modelName }}Validator = vine.compile(
+export const create{{ modelName }}Validator = vine.compile(
   vine.object({
     {{ columns }}
   })
 )
 
-export const {{ modelName }}ValidatorUpdate = vine.compile(
+export const update{{ modelName }}Validator = vine.compile(
   vine.object({
     {{ columnsUpdate }}
   })

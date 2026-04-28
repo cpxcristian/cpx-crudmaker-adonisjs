@@ -1,12 +1,8 @@
-import type { HttpContext } from '@adonisjs/core/http'
 import i18nManager from '@adonisjs/i18n/services/main'
 import config from '@adonisjs/core/services/config'
 
 import QueryFilterService from '#services/query_filter_service'
 import FileUploadService from '#services/file_upload_service'
-
-type SaveResponse = { status: boolean; message: string; data?: any | null }
-type DestroyResponse = { status: boolean; message: string }
 
 export default class BaseController {
   i18n: any = null

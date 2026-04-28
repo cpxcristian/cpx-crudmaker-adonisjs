@@ -86,12 +86,12 @@ export const generateModel = ({ name, columns, constraints }: GenerateModel) => 
 
     contentColumns += `
   @column()
-  declare ${column.COLUMN_NAME}: ${columnTypes[column.DATA_TYPE]}
+  declare ${string.camelCase(column.COLUMN_NAME)}: ${columnTypes[column.DATA_TYPE]}
 `
   }
 
   content = content.replace('{{ columns }}', contentColumns.trim())
-  content = content.replace('{{ arrayColumns }}', columns.map((column: any) => `'${column.COLUMN_NAME}'`).join(', '))
+  content = content.replace('{{ arrayColumns }}', columns.map((column: any) => `'${string.camelCase(column.COLUMN_NAME)}'`).join(', '))
 
   //MARK: Add relations
   let modelsImports: string[] = []
