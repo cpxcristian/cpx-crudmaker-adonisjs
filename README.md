@@ -2,11 +2,23 @@
 
 Generate CRUD operations for [AdonisJS v6 and v7](https://adonisjs.com/).
 
+
+## Limitations
 - Works over mysql or mariaDB.
+- The database connection to generate the CRUD has to be named "mysql".
 - User need to add a new database connection in `config/database.ts` called "information_schema" to read the database schema.
+
+## Notes and things to improve
+- We use information_schema instead of SchemaInspector to get belongTo and hasMany relations.
+- Also stubs in adonisjs are not used because have errors on v6 and v7, we use "manual" stubs for now.
+- Many to Many and hasOne relations are not implemented yet.
 
 ## Features
 - Generate CRUD components (model, validator, controller and lang files) for a given table name.
+- Model is generated with columns, types, indexes, relations (belongTo and hasMany).
+- Validator is generated with rules for each column.
+- Controller is generated with basic CRUD operations (index, show, store, update, destroy).
+- Lang files are generated for each CRUD component.
 
 ## Installation
 
