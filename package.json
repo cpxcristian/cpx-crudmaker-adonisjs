@@ -1,0 +1,53 @@
+{
+  "name": "@cpxproject/crudmaker-adonisjs",
+  "version": "1.0.0",
+  "description": "Generate CRUD for adonisjs.",
+  "keywords": [
+    "adonisjs",
+    "adonisjs-v6",
+    "crud",
+    "mysql",
+    "mariadb"
+  ],
+  "homepage": "https://github.com/cpxcristian/cpx-crudmaker-adonisjs#readme",
+  "bugs": {
+    "url": "https://github.com/cpxcristian/cpx-crudmaker-adonisjs/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cpxcristian/cpx-crudmaker-adonisjs.git"
+  },
+  "license": "MIT",
+  "author": "Cristian Mendoza <khris.cmd@gmail.com>",
+  "type": "module",
+  "exports": {
+    ".": "./build/index.js",
+    "./commands": "./build/src/commands/main.js",
+    "./configure": "./build/configure.js"
+  },
+  "main": "build/index.js",
+  "types": "./build/index.d.ts",
+  "files": [
+    "build"
+  ],
+  "scripts": {
+    "build": "npm run clean && tsc && npm run index:commands && npm run copy:stubs",
+    "build:no-stubs": "npm run clean && tsc && npm run index:commands",
+    "clean": "rm -rf build",
+    "index:commands": "adonis-kit index build/src/commands",
+    "copy:stubs": "mkdir -p build/src/stubs && cp src/stubs/*.stub build/src/stubs/",
+    "prepublishOnly": "npm run build"
+  },
+  "devDependencies": {
+    "@adonisjs/assembler": "^7.8.2 || ^8.0.0",
+    "@adonisjs/core": "^6.18.0 || ^7.0.0",
+    "@adonisjs/lucid": "^21.6.1 || ^22.0.0",
+    "@adonisjs/tsconfig": "^1.4.0",
+    "@types/node": "^25.6.0",
+    "typescript": "~5.8"
+  },
+  "peerDependencies": {
+    "@adonisjs/core": "^6.18.0 || ^7.0.0",
+    "@adonisjs/lucid": "^21.6.1 || ^22.0.0"
+  }
+}

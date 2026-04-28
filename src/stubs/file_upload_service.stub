@@ -1,0 +1,19 @@
+import fs from 'fs'
+import app from '@adonisjs/core/services/app'
+import { v4 as uuidv4 } from 'uuid'
+
+export default class FileUploadService {
+  async uploadFile(sourceData: string, path: string) {
+    let filePath = ''
+    const marker = sourceData.search('base64,') + 7
+    let ext = sourceData.slice(0, marker)
+    ext = ext.replace('data:image/', '')
+    ext = ext.replace(';base64,', '')
+
+    const img = Buffer.from(sourceData.slice(marker, sourceData.length), 'base64')
+    filePath = `${path}/${uuidv4()}.${ext}`
+    await fs.writeFileSync(app.makePath(filePath), img)
+
+    return filePath
+  }
+}

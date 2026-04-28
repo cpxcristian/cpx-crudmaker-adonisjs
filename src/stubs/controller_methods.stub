@@ -1,0 +1,70 @@
+/**
+   * MARK: - Index
+   */
+  async index({ request, response }: HttpContext) {
+    const rows = await this.queryFilters(this.model, { ...request.all() })
+    return response.ok(rows)
+  }
+
+  /**
+   * MARK: - Store
+   */
+  async store({ auth, request, response }: HttpContext) {
+    const payload = await request.validateUsing(this.validator)
+
+    try {
+      let data = {
+        ...(this.mergeColumns(this.columns, payload)), ...{
+          createdBy: auth.use('api').user?.id,
+          updatedBy: auth.use('api').user?.id,
+        }
+      }
+
+      const newRow = await this.model.create(data)
+      return response.created(newRow)
+    } catch (error) {
+      return response.badRequest(error)
+    }
+  }
+
+  /**
+   * MARK: - Show
+   */
+  async show({ params, response }: HttpContext) {
+    const row = await this.model.findOrFail(params.id)
+    return response.ok(row)
+  }
+
+  /**
+   * MARK: - Update
+   */
+  async update({ auth, params, request, response }: HttpContext) {
+    const row = await this.model.findOrFail(params.id)
+    const payload = await request.validateUsing(this.validatorUpdate)
+
+    try {
+      let data = {
+        ...(this.mergeColumns(this.columns, payload)), ...{
+          updatedBy: auth.use('api').user?.id,
+        }
+      }
+      await row.merge(data).save()
+      return response.ok(row)
+    } catch (error) {
+      return this.catchUpdateError(response, error)
+    }
+  }
+
+  /**
+   * MARK: - Destroy
+   */
+  async destroy({ params, response }: HttpContext) {
+    const row = await this.model.findOrFail(params.id)
+
+    try {
+      await row.delete()
+      return response.noContent()
+    } catch (error) {
+      return this.catchDeleteError(response, error)
+    }
+  }

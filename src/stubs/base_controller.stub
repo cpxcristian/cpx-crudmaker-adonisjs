@@ -1,0 +1,117 @@
+import type { HttpContext } from '@adonisjs/core/http'
+import i18nManager from '@adonisjs/i18n/services/main'
+import config from '@adonisjs/core/services/config'
+
+import QueryFilterService from '#services/query_filter_service'
+import FileUploadService from '#services/file_upload_service'
+
+type SaveResponse = { status: boolean; message: string; data?: any | null }
+type DestroyResponse = { status: boolean; message: string }
+
+export default class BaseController {
+  i18n: any = null
+  model: any = null
+  lang: string = ''
+  validator: any = null
+  validatorUpdate: any = null
+  columns: string[] = []
+
+  constructor() {
+    this.i18n = i18nManager.locale(config.get('i18n.defaultLocale'))
+  }
+
+  /**
+   * MARK: ADITIONAL METHODS
+   */
+
+
+
+
+  /**
+   * MARK: mergeColumns
+   * For PATCH and PUT requests
+   * Compare the request data with given model columns and only keep the ones who exist in model
+   * @param columns Model specified column names
+   * @param data request data
+   * @returns Object
+   */
+  mergeColumns(columns: string[], data: any) {
+    const params: any = {}
+    for (const [key, el] of Object.entries(data)) {
+      if (columns.includes(key)) {
+        params[key] = el
+      }
+    }
+    return params
+  }
+
+  /**
+   * MARK: queryFilters
+   */
+  async queryFilters(model: any, params: any) {
+    return await new QueryFilterService().queryFilters(model, params)
+  }
+
+  /**
+   * MARK: uploadFiles
+   */
+  async uploadFiles(sourceData: string, path: string) {
+    return await new FileUploadService().uploadFile(sourceData, path)
+  }
+
+  /**
+   * MARK: catchStoreError
+   */
+  catchStoreError(response: any, error: any) {
+    if (['23505', 'ER_DUP_ENTRY'].includes(error.code)) {
+      return response.conflict({
+        message: this.i18n.t(`${this.lang}.store_error_conflict`)
+      })
+    }
+
+    if (['23503', 'ER_NO_REFERENCED_ROW_2'].includes(error.code)) {
+      return response.conflict({
+        message: this.i18n.t(`${this.lang}.store_error_no_referenced_row`)
+      })
+    }
+
+    // 4. Fallo genérico del servidor
+    return response.internalServerError({ message: this.i18n.t(`${this.lang}.store_error`) })
+  }
+
+  /**
+   * MARK: catchUpdateError
+   */
+  catchUpdateError(response: any, error: any) {
+    if (error.status === 422) {
+      throw error
+    }
+
+    if (error.code === '23505' || error.code === 'ER_DUP_ENTRY') {
+      return response.conflict({
+        message: this.i18n.t(`${this.lang}.update_error_conflict`)
+      })
+    }
+
+    if (['23503', 'ER_NO_REFERENCED_ROW_2'].includes(error.code)) {
+      return response.conflict({
+        message: this.i18n.t(`${this.lang}.update_error_no_referenced_row`)
+      })
+    }
+
+    return response.internalServerError({ message: this.i18n.t(`${this.lang}.update_error`) })
+  }
+
+  /**
+   * MARK: catchDeleteError
+   */
+  catchDeleteError(response: any, error: any) {
+    if (error.code === 'ER_ROW_IS_REFERENCED' || error.code === '23503') {
+      return response.conflict({
+        message: this.i18n.t(`${this.lang}.delete_error_constraint`)
+      })
+    }
+
+    return response.internalServerError({ message: this.i18n.t(`${this.lang}.delete_error`) })
+  }
+}

@@ -1,0 +1,223 @@
+export default class QueryFilterService {
+  toSnake = (p: string) => p.split(/(?=[A-Z])/).join('_').toLowerCase()
+
+  /**
+   * MARK: queryFilters
+   * @param model Model where to filter at
+   * @param params Params to filter model
+   * @returns 
+   */
+  queryFilters = async (model: any, params: any) => {
+    let result: any = {};
+    let query = model.query()
+    let modelColumns = new model().columns
+
+    //Preload relations
+    query = this.getPreloads(params, query)
+
+
+    //Filter by specific columns
+    query = this.filterByColumn(params, query, modelColumns)
+    //Filter by general param
+    query = this.filterBySearch(params, query, modelColumns)
+
+    //Order
+    query.orderBy([{ column: params.orderBy ?? 'id', order: params.orderDirection ?? 'ASC' }])
+
+    //Paginate
+    if (params.paginate !== undefined) {
+      result = await query.paginate(params.page ?? 1, params.perPage ?? 10)
+    } else {
+      if (params.first) {
+        result = await query.first()
+      } else {
+        if (params.perPage !== undefined) {
+          query = query.limit(params.perPage ?? 10);
+        }
+        result = await query
+      }
+    }
+
+    return result
+  }
+
+  /**
+   * MARK: filterByColumn
+   * Filter by column
+   */
+  filterByColumn = (params: any, query: any, modelColumns: any) => {
+    //let mainCols = ['q', 'target', 'paginate', 'perPage', 'page', 'orderBy', 'orderDirection', 'load']
+
+    //Set format { key: value } to filter list
+    let columnFilters: any = {}
+    for (const [k, v] of Object.entries(params)) {
+      if (modelColumns.includes(k)) {
+        columnFilters[k] = v
+      }
+    }
+
+    if (Object.keys(columnFilters).length > 0) {
+      query = this.filterFilter(columnFilters, query, modelColumns, 'AND')
+    }
+    return query
+  }
+
+  /**
+   * MARK: filterBySearch
+   * Filter by search param
+   * q: value to filter to
+   * target: Array with the column names to filter with
+   */
+  filterBySearch = (params: any, query: any, modelColumns: any) => {
+    if (params.q !== undefined) {
+      //If columns to search were given or else use the ones model defined
+      let columns = []
+      if (params.target !== undefined) {
+        columns = typeof params.target === 'string' ? [params.target] : params.target
+      } else {
+        columns = modelColumns
+      }
+
+      //Set format { key: value } to filter list
+      let columnFilters: any = {}
+      for (const k of columns) {
+        columnFilters[k] = params.q
+      }
+
+      if (Object.keys(columnFilters).length > 0) {
+        query = this.filterFilter(columnFilters, query, modelColumns, 'AND')
+      }
+    }
+    return query
+  }
+
+  /**
+   * MARK: filterFilter
+   * 
+   * @param columns - Array de filtros enviado desde el front. Ej: [{'product.name': 1}]
+   * @param query - Objeto query al que se le agregarán los filtros y se devolverá
+   * @param modelColumns - Array con los nombres de las columnas que se obtine del model de la entidad a filtrar
+   * @param queryType - Tipo de query (AND o OR)
+   * 
+   * @returns query - Objeto query con los filtros aplicados
+   */
+  filterFilter = (columns: any = {}, query: any, modelColumns: any, queryType: string) => {
+    let isFirst = true
+    for (const [column, value] of Object.entries(columns)) {
+      //Hacer split del nombre de la columna y si tiene 'entity.name' entonces es una relación
+      let [t, c] = column.split('.')
+
+      //Busca en la tabla relacionada
+      if (c !== undefined) {
+        if (isFirst) {
+          query.whereHas(t, (q: any) => { q.whereRaw(`${this.toSnake(c)} LIKE '%${value}%'`) })
+          isFirst = false
+        } else {
+          if (queryType === 'AND') {
+            query.andWhereHas(t, (q: any) => { q.whereRaw(`${this.toSnake(c)} LIKE '%${value}%'`) })
+          } else {
+            query.orWhereHas(t, (q: any) => { q.whereRaw(`${this.toSnake(c)} LIKE '%${value}%'`) })
+          }
+        }
+      }
+      //Busca en la tabla actual
+      else {
+        //Si la columna del filtro no existe en las columnas del modelo, se ignora
+        if (!modelColumns.includes(column)) {
+          continue
+        }
+
+        //Si es número hace búsqueda exacta
+        if (!isNaN(Number(value))) {
+          if (isFirst) {
+            query.whereRaw(`${this.toSnake(column)} = ${value}`)
+            isFirst = false
+          } else {
+            if (queryType === 'AND') {
+              query.andWhereRaw(`${this.toSnake(column)} = ${value}`)
+            } else {
+              query.orWhereRaw(`${this.toSnake(column)} = ${value}`)
+            }
+          }
+        }
+        //Si es string hace búsqueda con LIKE
+        else if (typeof value === 'string') {
+          if (isFirst) {
+            query.whereRaw(`${this.toSnake(column)} LIKE '%${value}%'`)
+            isFirst = false
+          } else {
+            if (queryType === 'AND') {
+              query.andWhereRaw(`${this.toSnake(column)} LIKE '%${value}%'`)
+            } else {
+              query.orWhereRaw(`${this.toSnake(column)} LIKE '%${value}%'`)
+            }
+          }
+        }
+        //Si es object hace búsqueda con IN
+        else if (typeof value === 'object') {
+          if (isFirst) {
+            query.whereIn(t, value)
+            isFirst = false
+          } else {
+            if (queryType === 'AND') {
+              query.andWhereIn(t, value)
+            } else {
+              query.orWhereIn(t, value)
+            }
+          }
+        }
+      }
+    }
+    return query
+  }
+
+  /**
+   * MARK: getPreloads
+   * Merge nested relations to avoid replacing
+   */
+  getPreloads = (params: any, query: any) => {
+    let finalLoads: any = {}
+
+    //Merge nested relations to avoid replacing
+    if (params.load !== undefined) {
+      for (const relation of params.load) {
+        if (relation.indexOf(".") > 0) {
+          var [fR, sR, lR] = relation.split(".")
+          finalLoads[fR] = finalLoads[fR] ?? {}
+
+          if (lR === undefined) {
+            finalLoads[fR][sR] = true
+          } else {
+            finalLoads[fR][sR] = finalLoads[fR][sR] ?? {}
+            finalLoads[fR][sR][lR] = true
+          }
+        } else {
+          finalLoads[relation] = true
+        }
+      }
+    }
+
+    //Load nested relations
+    for (const [k, v] of Object.entries(finalLoads)) {
+      if (v !== true) {
+        query.preload(k, (q: any) => {
+          for (const [k2, v2] of Object.entries(v as keyof {})) {
+            if (v2 !== true) {
+              q.preload(k2, (q: any) => {
+                for (const k3 of Object.keys(v2 as keyof {})) {
+                  q.preload(k3)
+                }
+              })
+            } else {
+              q.preload(k2)
+            }
+          }
+        })
+      } else {
+        query.preload(k)
+      }
+    }
+
+    return query
+  }
+}

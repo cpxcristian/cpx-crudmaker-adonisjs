@@ -1,0 +1,16 @@
+import { DateTime } from 'luxon'
+import { BaseModel, column, hasMany, belongsTo } from '@adonisjs/lucid/orm'
+import type { HasMany, BelongsTo } from '@adonisjs/lucid/types/relations'
+{{ imports }}
+
+export default class {{ modelName }} extends BaseModel {
+  //MARK: Columns
+  columns = [{{ arrayColumns }}]
+
+  {{ columns }}
+
+  //MARK: Relations
+  {{ relations }}
+
+  //MARK: Your code here
+}
