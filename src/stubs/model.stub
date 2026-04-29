@@ -1,7 +1,5 @@
 import { DateTime } from 'luxon'
-import { BaseModel, column, hasMany, belongsTo } from '@adonisjs/lucid/orm'
-import type { HasMany, BelongsTo } from '@adonisjs/lucid/types/relations'
-{{ imports }}
+import { BaseModel, column{{ arrayRelations }} } from '@adonisjs/lucid/orm'{{ arrayRelationsTypes }}{{ imports }}
 
 export default class {{ modelName }} extends BaseModel {
   //MARK: Columns

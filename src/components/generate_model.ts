@@ -20,6 +20,7 @@ type GenerateModel = {
 const getRelation = ({ name, relationType, modelsImports }: GetRelation) => {
   let result = ''
   let modelsImportsResult = []
+  const relationName = relationType === 'hasMany' ? string.camelCase(string.plural(name)) : string.camelCase(string.singular(name))
   const modelName = string.pascalCase(string.singular(name))
   const relation: Record<string, string> = {
     'belongsTo': 'BelongsTo',
@@ -29,7 +30,7 @@ const getRelation = ({ name, relationType, modelsImports }: GetRelation) => {
   }
   result = `
   @${relationType}(() => ${modelName})
-  declare ${modelName}: ${relation[relationType]}<typeof ${modelName}>
+  declare ${relationName}: ${relation[relationType]}<typeof ${modelName}>
 `
   if (!modelsImports.includes(modelName)) {
     modelsImportsResult.push(modelName)
@@ -119,12 +120,19 @@ export const generateModel = ({ name, columns, constraints }: GenerateModel) => 
   content = content.replace('{{ relations }}', (resultBelongsTo + resultHasMany).trim())
 
   //MARK: Add imports
+  const modelRelImports = [
+    ...(resultHasMany.length > 0 ? ['HasMany'] : []),
+    ...(resultBelongsTo.length > 0 ? ['BelongsTo'] : []),
+  ]
+  content = content.replace('{{ arrayRelations }}', (modelRelImports.length > 0 ? ', ' : '') + modelRelImports.map((column: any) => `${string.camelCase(column)}`).join(', '))
+  content = content.replace('{{ arrayRelationsTypes }}', modelRelImports.length > 0 ? `
+import type { ${modelRelImports.join(', ')} } from '@adonisjs/lucid/types/relations'` : '')
+
   let imports = ''
   modelsImports.forEach((model: string) => {
     imports += `
 import ${model} from './${string.singular(string.snakeCase(model))}.js'`
   })
-
   content = content.replace('{{ imports }}', imports)
 
   return content
