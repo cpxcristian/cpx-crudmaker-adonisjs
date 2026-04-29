@@ -40,7 +40,7 @@
    */
   async update({ auth, params, request, response }: HttpContext) {
     const row = await this.model.findOrFail(params.id)
-    const payload = await request.validateUsing(this.validatorUpdate)
+    const payload = await request.validateUsing(this.validatorUpdate, { meta: { id: params.id } })
 
     try {
       let data = {

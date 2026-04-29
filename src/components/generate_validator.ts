@@ -43,18 +43,22 @@ export const generateValidator = ({ name, columns }: { name: string, columns: an
     const baseColumn = `${string.camelCase(column.COLUMN_NAME)}: ${columnTypes[column.DATA_TYPE]}`
     const maxLength = column.CHARACTER_MAXIMUM_LENGTH ? `.maxLength(${column.CHARACTER_MAXIMUM_LENGTH})` : ''
     let addUnique = ''
+    let addUniqueUpdate = ''
     let addOptional = ''
 
     //Add unique to unique columns
     if (column.COLUMN_KEY === 'UNI') {
-      addUnique = `.unique()`
+      addUnique = `.unique({ table: '${name}' })`
+      addUniqueUpdate = `.unique({ table: '${name}', filter: (db, value, field) => {
+      db.whereNot('id', field.meta.id) 
+    } })`
     }
 
     //Add optional to created_by and updated_by
     if (column.COLUMN_NAME === 'created_by' || column.COLUMN_NAME === 'updated_by') {
       addOptional = `.optional()`
     }
-    if (column.IS_NULLABLE === 'YES') {
+    if (column.IS_NULLABLE === 'YES' || column.COLUMN_DEFAULT !== null) {
       addOptional = `.optional()`
     }
 
@@ -62,7 +66,7 @@ export const generateValidator = ({ name, columns }: { name: string, columns: an
     ${baseColumn}${maxLength}${addUnique}${addOptional},`
 
     contentColumnsUpdate += `
-    ${baseColumn}${maxLength}${addUnique}.optional(),`
+    ${baseColumn}${maxLength}${addUniqueUpdate}.optional(),`
   }
 
   content = content.replace('{{ columns }}', contentColumns.trim())
