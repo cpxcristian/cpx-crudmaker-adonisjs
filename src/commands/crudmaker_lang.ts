@@ -1,6 +1,5 @@
 import { BaseCommand, args } from '@adonisjs/core/ace'
 import type { CommandOptions } from '@adonisjs/core/types/ace'
-import string from '@adonisjs/core/helpers/string'
 
 import { generateLang } from '../components/generate_lang.js'
 import { saveFile } from '../components/save_file.js'

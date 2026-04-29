@@ -28,6 +28,7 @@ export const generateValidator = ({ name, columns }: { name: string, columns: an
   let contentColumns = ''
   let contentColumnsUpdate = ''
   for (const column of columns) {
+    //Skip columns
     if (column.COLUMN_NAME === 'id') {
       continue
     }
@@ -38,12 +39,30 @@ export const generateValidator = ({ name, columns }: { name: string, columns: an
       continue
     }
 
+
+    const baseColumn = `${string.camelCase(column.COLUMN_NAME)}: ${columnTypes[column.DATA_TYPE]}`
     const maxLength = column.CHARACTER_MAXIMUM_LENGTH ? `.maxLength(${column.CHARACTER_MAXIMUM_LENGTH})` : ''
+    let addUnique = ''
+    let addOptional = ''
+
+    //Add unique to unique columns
+    if (column.COLUMN_KEY === 'UNI') {
+      addUnique = `.unique()`
+    }
+
+    //Add optional to created_by and updated_by
+    if (column.COLUMN_NAME === 'created_by' || column.COLUMN_NAME === 'updated_by') {
+      addOptional = `.optional()`
+    }
+    if (column.IS_NULLABLE === 'YES') {
+      addOptional = `.optional()`
+    }
+
     contentColumns += `
-    ${string.camelCase(column.COLUMN_NAME)}: ${columnTypes[column.DATA_TYPE]}${maxLength},`
+    ${baseColumn}${maxLength}${addUnique}${addOptional},`
 
     contentColumnsUpdate += `
-    ${string.camelCase(column.COLUMN_NAME)}: ${columnTypes[column.DATA_TYPE]}${maxLength}.optional(),`
+    ${baseColumn}${maxLength}${addUnique}.optional(),`
   }
 
   content = content.replace('{{ columns }}', contentColumns.trim())
