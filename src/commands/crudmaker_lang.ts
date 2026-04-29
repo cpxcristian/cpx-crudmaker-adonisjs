@@ -23,7 +23,7 @@ export default class CpxCrudmakerLangCommand extends BaseCommand {
 
     //Save file
     const dir = this.app.makePath('resources', 'lang', locale)
-    const fileName = string.singular(this.name)
+    const fileName = this.name
     const content = generateLang({ name: this.name })
     saveFile({ dir, fileName, content, format: 'json', logger: this.logger })
   }
