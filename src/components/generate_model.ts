@@ -131,7 +131,7 @@ import type { ${modelRelImports.join(', ')} } from '@adonisjs/lucid/types/relati
   let imports = ''
   modelsImports.forEach((model: string) => {
     imports += `
-import ${model} from './${string.singular(string.snakeCase(model))}.js'`
+import ${model} from '#models/${string.singular(string.snakeCase(model))}'`
   })
   content = content.replace('{{ imports }}', imports)
 
