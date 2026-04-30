@@ -10,7 +10,7 @@ export default class QueryFilterService {
   queryFilters = async (model: any, params: any) => {
     let result: any = {};
     let query = model.query()
-    let modelColumns = new model().columns
+    let modelColumns = new model().$columns
 
     //Preload relations
     query = this.getPreloads(params, query)

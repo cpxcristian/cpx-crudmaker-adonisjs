@@ -10,6 +10,6 @@ export default class {{ controllerName }}Controller extends BaseController {
     this.lang = '{{ langFileName }}'
     this.validator = create{{ modelName }}Validator
     this.validatorUpdate = update{{ modelName }}Validator
-    this.columns = new {{ modelName }}().columns
+    this.columns = new {{ modelName }}().$columns
   }{{ crudMethods }}
 }
