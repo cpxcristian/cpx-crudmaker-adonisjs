@@ -3,7 +3,10 @@ import { BaseModel, column{{ arrayRelations }} } from '@adonisjs/lucid/orm'{{ ar
 
 export default class {{ modelName }} extends BaseModel {
   //MARK: Columns
-  columns = [{{ arrayColumns }}]
+  static $columns = [
+    {{ arrayColumns }}
+  ]
+  $columns = {{ modelName }}.$columns
 
   {{ columns }}
 

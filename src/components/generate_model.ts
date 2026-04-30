@@ -3,9 +3,10 @@ import fs from 'node:fs'
 import string from '@adonisjs/core/helpers/string'
 
 type GetRelation = {
-  name: string
+  tableName: string
   relationType: string
   modelsImports: string[]
+  foreignKey: string
 }
 
 type GenerateModel = {
@@ -17,19 +18,31 @@ type GenerateModel = {
 /**
  * MARK: getRelation
  */
-const getRelation = ({ name, relationType, modelsImports }: GetRelation) => {
+const getRelation = ({ tableName, relationType, modelsImports, foreignKey }: GetRelation) => {
   let result = ''
   let modelsImportsResult = []
-  const relationName = relationType === 'hasMany' ? string.camelCase(string.plural(name)) : string.camelCase(string.singular(name))
-  const modelName = string.pascalCase(string.singular(name))
+  const modelName = string.pascalCase(string.singular(tableName))
   const relation: Record<string, string> = {
     'belongsTo': 'BelongsTo',
     'hasMany': 'HasMany',
     'hasOne': 'HasOne',
     'manyToMany': 'ManyToMany',
   }
+  let relationName = ''
+
+  if (relationType === 'hasMany') {
+    // Relation name is the plural of the table name. Example: roles
+    relationName = string.camelCase(string.plural(tableName))
+  } else {
+    // Relation name is the singular of the table name plus the foreign key. Example: userUpdatedBy
+    relationName = string.camelCase(`${string.singular(tableName)}_${foreignKey}`)
+  }
+
   result = `
-  @${relationType}(() => ${modelName})
+  @${relationType}(() => ${modelName}, {
+    localKey: 'id',
+    foreignKey: '${string.camelCase(foreignKey)}',
+  })
   declare ${relationName}: ${relation[relationType]}<typeof ${modelName}>
 `
   if (!modelsImports.includes(modelName)) {
@@ -47,7 +60,7 @@ export const generateModel = ({ name, columns, constraints }: GenerateModel) => 
   const templatePath = new URL('../stubs/model.stub', import.meta.url)
   let content = fs.readFileSync(templatePath, 'utf8')
 
-  content = content.replace('{{ modelName }}', string.pascalCase(string.singular(name)))
+  content = content.replaceAll('{{ modelName }}', string.pascalCase(string.singular(name)))
 
   //MARK: Add columns
   const columnTypes: Record<string, string> = {
@@ -92,7 +105,9 @@ export const generateModel = ({ name, columns, constraints }: GenerateModel) => 
   }
 
   content = content.replace('{{ columns }}', contentColumns.trim())
-  content = content.replace('{{ arrayColumns }}', columns.map((column: any) => `'${string.camelCase(column.COLUMN_NAME)}'`).join(', '))
+  content = content.replace('{{ arrayColumns }}', columns.map(
+    (column: any) => `'${string.camelCase(column.COLUMN_NAME)}'`
+  ).join(',\n    '))
 
   //MARK: Add relations
   let modelsImports: string[] = []
@@ -104,14 +119,26 @@ export const generateModel = ({ name, columns, constraints }: GenerateModel) => 
       continue
     }
 
+    const foreignKey = constraint.CONSTRAINT_NAME.replace(`${constraint.TABLE_NAME}_`, '').replace('_foreign', '')
+
     if (constraint.TABLE_NAME == name) {
-      const relation = getRelation({ name: constraint.REFERENCED_TABLE_NAME, relationType: 'belongsTo', modelsImports })
+      const relation = getRelation({
+        tableName: constraint.REFERENCED_TABLE_NAME,
+        relationType: 'belongsTo',
+        modelsImports,
+        foreignKey
+      })
       resultBelongsTo += relation.result
       modelsImports = [...modelsImports, ...relation.modelsImportsResult]
     }
 
     if (constraint.REFERENCED_TABLE_NAME == name) {
-      const relation = getRelation({ name: constraint.TABLE_NAME, relationType: 'hasMany', modelsImports })
+      const relation = getRelation({
+        tableName: constraint.TABLE_NAME,
+        relationType: 'hasMany',
+        modelsImports,
+        foreignKey
+      })
       resultHasMany += relation.result
       modelsImports = [...modelsImports, ...relation.modelsImportsResult]
     }
