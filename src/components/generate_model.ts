@@ -12,7 +12,6 @@ type GetRelation = {
 type GenerateModel = {
   name: string
   columns: any[]
-  constraints: any[]
 }
 
 /**
@@ -55,7 +54,7 @@ const getRelation = ({ tableName, relationType, modelsImports, foreignKey }: Get
 /**
  * MARK: generateModel
  */
-export const generateModel = ({ name, columns, constraints }: GenerateModel) => {
+export const generateModel = ({ name, columns }: GenerateModel) => {
   //Get template
   const templatePath = new URL('../stubs/model.stub', import.meta.url)
   let content = fs.readFileSync(templatePath, 'utf8')
@@ -76,44 +75,45 @@ export const generateModel = ({ name, columns, constraints }: GenerateModel) => 
 
   let contentColumns = ''
   for (const column of columns) {
-    if (column.COLUMN_NAME === 'id') {
+    const columnType = column.data_type.replace(' unsigned', '')
+    if (column.name === 'id') {
       contentColumns += `
   @column({ isPrimary: true })
   declare id: number
 `
       continue
     }
-    if (column.COLUMN_NAME === 'created_at') {
+    if (column.name === 'created_at') {
       contentColumns += `
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
 `
       continue
     }
-    if (column.COLUMN_NAME === 'updated_at') {
+    if (column.name === 'updated_at') {
       contentColumns += `
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime
 `
       continue
     }
-    if (['timestamp', 'datetime', 'date'].includes(column.DATA_TYPE)) {
+    if (['timestamp', 'datetime', 'date'].includes(columnType)) {
       contentColumns += `
-  @column.${column.DATA_TYPE === 'date' ? 'date' : 'dateTime'}()
-  declare ${string.camelCase(column.COLUMN_NAME)}: DateTime${column.IS_NULLABLE === 'YES' || column.COLUMN_DEFAULT !== null ? ' | null' : ''}
+  @column.${columnType === 'date' ? 'date' : 'dateTime'}()
+  declare ${string.camelCase(column.name)}: DateTime${column.is_nullable || column.default_value !== null ? ' | null' : ''}
 `
       continue
     }
 
     contentColumns += `
   @column()
-  declare ${string.camelCase(column.COLUMN_NAME)}: ${columnTypes[column.DATA_TYPE]}${column.IS_NULLABLE === 'YES' || column.COLUMN_DEFAULT !== null ? ' | null' : ''}
+  declare ${string.camelCase(column.name)}: ${columnTypes[columnType]}${column.is_nullable || column.default_value !== null ? ' | null' : ''}
 `
   }
 
   content = content.replace('{{ columns }}', contentColumns.trim())
   content = content.replace('{{ arrayColumns }}', columns.map(
-    (column: any) => `'${string.camelCase(column.COLUMN_NAME)}'`
+    (column: any) => `'${string.camelCase(column.name)}'`
   ).join(',\n    '))
 
   //MARK: Add relations
@@ -121,34 +121,15 @@ export const generateModel = ({ name, columns, constraints }: GenerateModel) => 
   let resultBelongsTo = ''
   let resultHasMany = ''
 
-  for (const constraint of constraints) {
-    if (constraint.REFERENCED_TABLE_SCHEMA === null) {
-      continue
-    }
-
-    const foreignKey = constraint.CONSTRAINT_NAME.replace(`${constraint.TABLE_NAME}_`, '').replace('_foreign', '')
-
-    if (constraint.TABLE_NAME == name) {
-      const relation = getRelation({
-        tableName: constraint.REFERENCED_TABLE_NAME,
-        relationType: 'belongsTo',
-        modelsImports,
-        foreignKey
-      })
-      resultBelongsTo += relation.result
-      modelsImports = [...modelsImports, ...relation.modelsImportsResult]
-    }
-
-    if (constraint.REFERENCED_TABLE_NAME == name) {
-      const relation = getRelation({
-        tableName: constraint.TABLE_NAME,
-        relationType: 'hasMany',
-        modelsImports,
-        foreignKey
-      })
-      resultHasMany += relation.result
-      modelsImports = [...modelsImports, ...relation.modelsImportsResult]
-    }
+  for (const constraint of columns.filter((column: any) => column.foreign_key_table !== null)) {
+    const relation = getRelation({
+      tableName: constraint.foreign_key_table,
+      relationType: 'belongsTo',
+      modelsImports,
+      foreignKey: constraint.name
+    })
+    resultBelongsTo += relation.result
+    modelsImports = [...modelsImports, ...relation.modelsImportsResult]
   }
 
   content = content.replace('{{ relations }}', (resultBelongsTo + resultHasMany).trim())

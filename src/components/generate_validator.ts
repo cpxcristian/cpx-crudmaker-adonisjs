@@ -30,26 +30,27 @@ export const generateValidator = ({ name, columns }: { name: string, columns: an
   let contentColumns = ''
   let contentColumnsUpdate = ''
   for (const column of columns) {
+    const columnType = column.data_type.replace(' unsigned', '')
     //Skip columns
-    if (column.COLUMN_NAME === 'id') {
+    if (column.name === 'id') {
       continue
     }
-    if (column.COLUMN_NAME === 'created_at') {
+    if (column.name === 'created_at') {
       continue
     }
-    if (column.COLUMN_NAME === 'updated_at') {
+    if (column.name === 'updated_at') {
       continue
     }
 
 
-    const baseColumn = `${string.camelCase(column.COLUMN_NAME)}: ${columnTypes[column.DATA_TYPE]}`
-    const maxLength = column.CHARACTER_MAXIMUM_LENGTH ? `.maxLength(${column.CHARACTER_MAXIMUM_LENGTH})` : ''
+    const baseColumn = `${string.camelCase(column.name)}: ${columnTypes[columnType]}`
+    const maxLength = column.max_length ? `.maxLength(${column.max_length})` : ''
     let addUnique = ''
     let addUniqueUpdate = ''
     let addOptional = ''
 
-    //Add unique to unique columns
-    if (column.COLUMN_KEY === 'UNI') {
+    //Pending: Shemabuilder does not return unique columns
+    if (column.column_key === 'UNI') {
       addUnique = `.unique({ table: '${name}' })`
       addUniqueUpdate = `.unique({ table: '${name}', filter: (db, value, field) => {
       db.whereNot('id', field.meta.id) 
@@ -57,10 +58,10 @@ export const generateValidator = ({ name, columns }: { name: string, columns: an
     }
 
     //Add optional to created_by and updated_by
-    if (column.COLUMN_NAME === 'created_by' || column.COLUMN_NAME === 'updated_by') {
+    if (column.name === 'created_by' || column.name === 'updated_by') {
       addOptional = `.optional()`
     }
-    if (column.IS_NULLABLE === 'YES' || column.COLUMN_DEFAULT !== null) {
+    if (column.is_nullable || column.default_value !== null) {
       addOptional = `.optional()`
     }
 
