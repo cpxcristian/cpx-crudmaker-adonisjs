@@ -23,6 +23,8 @@ export const generateValidator = ({ name, columns }: { name: string, columns: an
     'float': 'vine.number()',
     'double': 'vine.number()',
     'timestamp': `vine.date({ formats: ['YYYY-MM-DD HH:mm:ss'] })`,
+    'date': `vine.date({ formats: ['YYYY-MM-DD'] })`,
+    'datetime': `vine.date({ formats: ['YYYY-MM-DD HH:mm:ss'] })`,
   }
 
   let contentColumns = ''

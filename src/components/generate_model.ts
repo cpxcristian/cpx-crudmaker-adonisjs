@@ -97,10 +97,17 @@ export const generateModel = ({ name, columns, constraints }: GenerateModel) => 
 `
       continue
     }
+    if (['timestamp', 'datetime', 'date'].includes(column.DATA_TYPE)) {
+      contentColumns += `
+  @column.${column.DATA_TYPE === 'date' ? 'date' : 'dateTime'}()
+  declare ${string.camelCase(column.COLUMN_NAME)}: DateTime${column.IS_NULLABLE === 'YES' || column.COLUMN_DEFAULT !== null ? ' | null' : ''}
+`
+      continue
+    }
 
     contentColumns += `
   @column()
-  declare ${string.camelCase(column.COLUMN_NAME)}: ${columnTypes[column.DATA_TYPE]}
+  declare ${string.camelCase(column.COLUMN_NAME)}: ${columnTypes[column.DATA_TYPE]}${column.IS_NULLABLE === 'YES' || column.COLUMN_DEFAULT !== null ? ' | null' : ''}
 `
   }
 
