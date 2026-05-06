@@ -1,10 +1,11 @@
 {
   "name": "@cpxproject/crudmaker-adonisjs",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Generate CRUD for adonisjs.",
   "keywords": [
     "adonisjs",
     "adonisjs-v6",
+    "adonisjs-v7",
     "crud",
     "mysql",
     "mariadb"
