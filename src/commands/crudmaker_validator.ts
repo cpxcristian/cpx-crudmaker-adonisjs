@@ -21,11 +21,7 @@ export default class CpxCrudmakerValidatorCommand extends BaseCommand {
 
   async run() {
     const db = (await this.app.container.make('lucid.db')) as Database
-    const databaseName = this.app.config.get('database.connections.mysql.connection.database') as string
-    this.logger.info(`${new Date().toISOString()} - Creating validator for table: ${this.name}`)
-
-    //Get columns and constraints
-    const columns = await getColumns({ db, databaseName, tableName: this.name })
+    const columns = await getColumns({ db, tableName: this.name })
 
     //Save file
     const dir = this.app.makePath('app', 'validators')

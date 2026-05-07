@@ -4,14 +4,7 @@ Generate CRUD operations for [AdonisJS v6 and v7](https://adonisjs.com/).
 
 
 ## Limitations
-- Works over mysql or mariaDB.
-- The database connection to generate the CRUD has to be named "mysql".
-- User need to add a new database connection in `config/database.ts` called "information_schema" to read the database schema.
-
-## Notes and things to improve
-- We use information_schema instead of SchemaInspector to get belongTo and hasMany relations.
-- Also stubs in adonisjs are not used because have errors on v6 and v7, we use "manual" stubs for now.
-- Many to Many and hasOne relations are not implemented yet.
+- Only generates belongsTo relations.
 
 ## Features
 - Generate CRUD components (model, validator, controller and lang files) for a given table name.
@@ -19,6 +12,14 @@ Generate CRUD operations for [AdonisJS v6 and v7](https://adonisjs.com/).
 - Validator is generated with rules for each column.
 - Controller is generated with basic CRUD operations (index, show, store, update, destroy).
 - Lang files are generated for each CRUD component.
+
+## Changes
+- Implemented SchemaInspector to get relations, instead of information_schema connection.
+- The connection called "information_schema" is not needed anymore.
+- The name of the main database connection is not "mysql" anymore, it can be any name.
+- Works over mysql, mariadb, postgresql and sqlite.
+
+
 
 ## Installation
 
@@ -65,25 +66,6 @@ node ace cpx-crudmaker:controller table_name
 
 ```bash
 node ace cpx-crudmaker:lang table_name
-```
-
-### Add information_schema connection in "config/database.ts"
-```
-    information_schema: {
-      client: 'mysql2',
-      connection: {
-        host: env.get('DB_HOST'),
-        port: env.get('DB_PORT'),
-        user: env.get('DB_USER'),
-        password: env.get('DB_PASSWORD'),
-        database: 'information_schema',
-        timezone: '-06:00',
-      },
-      migrations: {
-        naturalSort: true,
-        paths: ['database/migrations'],
-      },
-    },
 ```
 
 ## License
