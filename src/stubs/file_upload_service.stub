@@ -1,19 +1,43 @@
-import fs from 'fs'
 import app from '@adonisjs/core/services/app'
 import { v4 as uuidv4 } from 'uuid'
+import { HttpContext } from '@adonisjs/core/http'
+import fs from 'node:fs/promises'
 
 export default class FileUploadService {
-  async uploadFile(sourceData: string, path: string) {
-    let filePath = ''
-    const marker = sourceData.search('base64,') + 7
-    let ext = sourceData.slice(0, marker)
-    ext = ext.replace('data:image/', '')
-    ext = ext.replace(';base64,', '')
+  /**
+   * Upload a file to the server
+   * @param request HttpContext['request'] - Request object
+   * @param field string - Request file field name
+   * @param folder string - Directory to upload
+   * @param replaceFile string | null - File name to replace
+   * @returns { status: boolean, message: string }
+   */
+  async uploadFile(request: HttpContext['request'], field: string, folder: string, replaceFile: string | null = null) {
+    const result = { status: true, message: '' } as { status: boolean, message: string }
+    const image = request.file(field, {
+      size: '2mb',
+      extnames: ['jpg', 'png', 'jpeg'],
+    })
 
-    const img = Buffer.from(sourceData.slice(marker, sourceData.length), 'base64')
-    filePath = `${path}/${uuidv4()}.${ext}`
-    await fs.writeFileSync(app.makePath(filePath), img)
+    if (!image || image.hasErrors) {
+      result.status = false
+      result.message = image?.errors.join(', ') || 'Error en el archivo'
+      return result
+    }
 
-    return filePath
+    const fileName = `${uuidv4()}.${image.extname}`
+
+    await image.move(app.makePath('uploads', folder), {
+      name: fileName,
+      overwrite: true,
+    })
+
+    if (replaceFile) {
+      const oldFile = app.makePath('uploads', folder, replaceFile)
+      await fs.unlink(oldFile)
+    }
+
+    result.message = `uploads/${folder}/${fileName}`
+    return result
   }
 }
