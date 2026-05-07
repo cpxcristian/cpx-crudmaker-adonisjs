@@ -33,8 +33,17 @@ const getRelation = ({ tableName, relationType, modelsImports, foreignKey }: Get
     // Relation name is the plural of the table name. Example: roles
     relationName = string.camelCase(string.plural(tableName))
   } else {
-    // Relation name is the singular of the table name plus the foreign key. Example: userUpdatedBy
-    relationName = string.camelCase(`${string.singular(tableName)}_${foreignKey}`)
+    // Relation name is the singular of the table name.
+    relationName = string.singular(tableName)
+
+    //If your foreign key does not contain the name of the table, add it
+    //Example: If your foreignKey is: created_by, and tableName is: users, the relationName will be: userCreatedBy.
+    //This is done to avoid name collisions like: userUpdatedBy and userCreatedBy.
+    if (!foreignKey.includes(relationName)) {
+      relationName += `_${foreignKey}`
+    }
+
+    relationName = string.camelCase(relationName)
   }
 
   result = `

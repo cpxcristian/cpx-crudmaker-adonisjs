@@ -23,7 +23,7 @@
       const newRow = await this.model.create(data)
       return response.created(newRow)
     } catch (error) {
-      return response.badRequest(error)
+      return this.catchStoreError(response, error)
     }
   }
 
