@@ -2,6 +2,8 @@
 
 Generate CRUD operations for [AdonisJS v6 and v7](https://adonisjs.com/).
 
+Uses [knex-schema-inspector](https://www.npmjs.com/package/knex-schema-inspector).
+
 
 ## Limitations
 - Only generates belongsTo relations.
