@@ -27,6 +27,6 @@ export default class CpxCrudmakerModelCommand extends BaseCommand {
     const dir = this.app.makePath('app', 'models')
     const fileName = string.singular(this.name)
     const content = generateModel({ name: this.name, columns })
-    saveFile({ dir, fileName, content, logger: this.logger })
+    await saveFile({ dir, fileName, content, logger: this.logger, colors: this.colors, component: 'model' })
   }
 }

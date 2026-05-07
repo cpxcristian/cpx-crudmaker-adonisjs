@@ -1,10 +1,13 @@
 import fs from 'node:fs'
+import { relative } from 'path'
 
 type SaveFile = {
   dir: string
   fileName: string
   content: string
   logger: any
+  colors: any
+  component: string
   format?: 'ts' | 'json'
 }
 
@@ -15,14 +18,16 @@ type CopyFile = {
   force?: boolean
 }
 
-export const saveFile = async ({ dir, fileName, content, logger, format = 'ts' }: SaveFile) => {
+export const saveFile = async ({ dir, fileName, content, logger, colors, component, format = 'ts' }: SaveFile) => {
   if (!fs.existsSync(dir)) {
     await fs.promises.mkdir(dir, { recursive: true })
   }
 
-  await fs.promises.writeFile(`${dir}/${fileName}.${format}`, content)
+  const filePath = `${dir}/${fileName}.${format}`
 
-  logger.info(`${dir}/${fileName}.${format} created successfully.`)
+  await fs.promises.writeFile(filePath, content)
+
+  logger.log(`[ ${colors.green('success')} ][ ${colors.blue(component)} ] ${colors.dim(relative(process.cwd(), filePath))} created.`)
 }
 
 export const copyFile = async ({ name, destinationPath, logger, force = false }: CopyFile) => {

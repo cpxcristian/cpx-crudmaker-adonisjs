@@ -25,8 +25,6 @@ export default class CpxCrudmakerControllerCommand extends BaseCommand {
   declare forceStubs: boolean
 
   async run() {
-    this.logger.info(`${new Date().toISOString()} - Creating controller for table: ${this.name}`)
-
     copyFile({ name: 'query_filter_service', destinationPath: this.app.makePath('app', 'services'), logger: this.logger, force: this.forceStubs })
     copyFile({ name: 'file_upload_service', destinationPath: this.app.makePath('app', 'services'), logger: this.logger, force: this.forceStubs })
 
@@ -37,7 +35,7 @@ export default class CpxCrudmakerControllerCommand extends BaseCommand {
     if (!fileExists || this.forceStubs) {
       //Copy base controller if not exist
       const contentBase = generateBaseController()
-      saveFile({ dir: dirBase, fileName: fileNameBase, content: contentBase, logger: this.logger })
+      await saveFile({ dir: dirBase, fileName: fileNameBase, content: contentBase, logger: this.logger, colors: this.colors, component: 'base_controller' })
     }
 
 
@@ -45,6 +43,6 @@ export default class CpxCrudmakerControllerCommand extends BaseCommand {
     const dir = this.app.makePath('app', 'controllers')
     const fileName = `${this.name}_controller`
     const content = generateController({ name: this.name })
-    saveFile({ dir, fileName, content, logger: this.logger })
+    await saveFile({ dir, fileName, content, logger: this.logger, colors: this.colors, component: 'controller' })
   }
 }

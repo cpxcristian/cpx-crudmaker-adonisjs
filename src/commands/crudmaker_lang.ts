@@ -17,13 +17,12 @@ export default class CpxCrudmakerLangCommand extends BaseCommand {
   declare name: string
 
   async run() {
-    this.logger.info(`${new Date().toISOString()} - Creating lang for table: ${this.name}`)
     const locale = (this.app.config.get('i18n.defaultLocale') || 'es') as string
 
     //Save file
     const dir = this.app.makePath('resources', 'lang', locale)
     const fileName = this.name
     const content = generateLang({ name: this.name })
-    saveFile({ dir, fileName, content, format: 'json', logger: this.logger })
+    await saveFile({ dir, fileName, content, format: 'json', logger: this.logger, colors: this.colors, component: 'lang' })
   }
 }
